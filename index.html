@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Savings Calculator — SBN Logistics LLC</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f4f1ec; color: #1A2B4A; min-height: 100vh; padding: 2rem 1rem; }
+  .page-wrap { max-width: 760px; margin: 0 auto; }
+  .sbn-header { background: #1A2B4A; border-radius: 10px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1.25rem; }
+  .sbn-logo { background: #243558; border: 2px solid #C8923A; border-radius: 6px; padding: 8px 14px; text-align: center; flex-shrink: 0; }
+  .sbn-logo .name { color: #C8923A; font-size: 18px; font-weight: 700; letter-spacing: 2px; display: block; }
+  .sbn-logo .sub  { color: #8A9AB5; font-size: 9px; letter-spacing: 1px; display: block; }
+  .sbn-header h1  { color: #fff; font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .sbn-header p   { color: #8A9AB5; font-size: 13px; }
+  .card { background: #fff; border: 1px solid #e0d8cc; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.25rem; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; color: #C8923A; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 520px) { .field-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 13px; color: #374B6D; font-weight: 500; }
+  .field input[type=number], .field input[type=text], .field input[type=email], .field input[type=tel] {
+    width: 100%; padding: 9px 12px; border: 1px solid #d0c8bc; border-radius: 6px;
+    font-size: 14px; color: #1A2B4A; background: #fafaf8;
+    transition: border-color 0.15s;
+  }
+  .field input:focus { outline: none; border-color: #C8923A; background: #fff; }
+  .field .hint { font-size: 11px; color: #8A9AB5; }
+  .toggle-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; }
+  .toggle { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: #ccc; border-radius: 26px; cursor: pointer; transition: background 0.2s; }
+  .toggle input:checked + .toggle-slider { background: #C8923A; }
+  .toggle-slider::before { content:''; position:absolute; width:20px; height:20px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform 0.2s; }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+  .toggle-text .tl { font-size: 14px; font-weight: 500; color: #1A2B4A; }
+  .toggle-text .ts { font-size: 12px; color: #8A9AB5; margin-top: 1px; }
+  .badge { display: inline-block; background: #2a1e0a; color: #C8923A; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-left: 6px; vertical-align: middle; }
+  .results-area { margin-bottom: 1.25rem; }
+  .results-card { background: #1A2B4A; border-radius: 10px; padding: 1.5rem; }
+  .results-title { color: #C8923A; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.25rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+  .stat-box { background: #243558; border-radius: 8px; padding: 1rem; }
+  .stat-box .sl { font-size: 11px; color: #8A9AB5; margin-bottom: 4px; }
+  .stat-box .sv { font-size: 22px; font-weight: 600; color: #fff; }
+  .stat-box .sv.gold { color: #C8923A; }
+  .stat-box .sv.green { color: #5DC98A; }
+  .stat-box .ss { font-size: 11px; color: #8A9AB5; margin-top: 2px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem; }
+  @media (max-width: 480px) { .compare-grid { grid-template-columns: 1fr; } }
+  .cbox { border-radius: 8px; padding: 1rem 1.125rem; }
+  .cbox.bad  { background: #2a1414; border: 1px solid #5a2020; }
+  .cbox.good { background: #0e2218; border: 1px solid #1a5a30; }
+  .cbox h3 { font-size: 13px; margin-bottom: 10px; }
+  .cbox.bad h3  { color: #e87070; }
+  .cbox.good h3 { color: #5DC98A; }
+  .cbox .row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .cbox.bad .row  { color: #c09090; }
+  .cbox.good .row { color: #90c0a8; }
+  .cbox .total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 600; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .cbox.bad .total  { color: #e87070; }
+  .cbox.good .total { color: #5DC98A; }
+  .staging-note { background: #243558; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 12px; color: #8A9AB5; line-height: 1.5; }
+  .savings-banner { background: #C8923A; border-radius: 8px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+  .savings-banner .sb-l { font-size: 14px; font-weight: 600; color: #1A2B4A; }
+  .savings-banner .sb-v { font-size: 24px; font-weight: 700; color: #1A2B4A; }
+  .cta-card { background: #fff; border: 1px solid #e0d8cc; border-radius: 10px; padding: 1.5rem; }
+  .cta-card h2 { font-size: 16px; font-weight: 600; color: #1A2B4A; margin-bottom: 6px; }
+  .cta-card p { font-size: 13px; color: #5B7494; margin-bottom: 1.25rem; }
+  .cta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  @media (max-width: 480px) { .cta-grid { grid-template-columns: 1fr; } }
+  .check-label { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: #374B6D; margin-bottom: 1rem; cursor: pointer; line-height: 1.45; }
+  .check-label input { margin-top: 2px; flex-shrink: 0; accent-color: #C8923A; width: 15px; height: 15px; }
+  .btn-download { background: #C8923A; color: #1A2B4A; border: none; border-radius: 8px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s; }
+  .btn-download:hover { background: #E8B060; }
+  .confirm-msg { display: none; font-size: 13px; color: #2E7D52; text-align: center; margin-top: 0.875rem; padding: 10px; background: #eafaf2; border-radius: 6px; border: 1px solid #c0e8d0; }
+  .no-results { color: #8A9AB5; font-size: 13px; text-align: center; padding: 2rem 0; }
+  .footer-note { font-size: 11px; color: #8A9AB5; text-align: center; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="sbn-header">
+    <div class="sbn-logo">
+      <span class="name">SBN</span>
+      <span class="sub">LOGISTICS</span>
+    </div>
+    <div>
+      <h1>Fleet savings calculator</h1>
+      <p>See exactly what SBN Logistics costs vs. what detention and poor parking costs you today.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">&#128666; Your fleet</div>
+    <div class="field-grid">
+      <div class="field">
+        <label for="trucks">Trucks needing dedicated parking</label>
+        <input type="number" id="trucks" value="10" min="1" max="500" step="1">
+        <span class="hint">How many units need a secured spot?</span>
+      </div>
+      <div class="field">
+        <label for="current-cost">Current cost per spot / month ($)</label>
+        <input type="number" id="current-cost" value="320" min="0" max="2000" step="10">
+        <span class="hint">Truckstop, unsecured lot, or street parking</span>
+      </div>
+      <div class="field">
+        <label for="deadhead">Avg. deadhead miles to current parking</label>
+        <input type="number" id="deadhead" value="18" min="0" max="200" step="1">
+        <span class="hint">Round-trip miles lost per repositioning</span>
+      </div>
+      <div class="field">
+        <label for="fuel">Fuel &amp; wear cost per mile ($)</label>
+        <input type="number" id="fuel" value="0.52" min="0.10" max="2.00" step="0.01">
+        <span class="hint">Fully-loaded CPM including wear</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toggle-row">
+      <label class="toggle">
+        <input type="checkbox" id="staging-toggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+      <div class="toggle-text">
+        <div class="tl">Include JIT staging bays <span class="badge">High yield</span></div>
+        <div class="ts">For fleets servicing GM Ultium, Samsung SDI, or Amazon on the SR-2 corridor</div>
+      </div>
+    </div>
+    <div id="staging-fields">
+      <div class="section-label" style="margin-top:0">&#127981; Staging &amp; detention</div>
+      <div class="field-grid">
+        <div class="field">
+          <label for="loads">Loads staged per month (per staging truck)</label>
+          <input type="number" id="loads" value="6" min="1" max="30" step="1">
+          <span class="hint">Avg. plant deliveries per truck per month</span>
+        </div>
+        <div class="field">
+          <label for="detention-hrs">Avg. gate detention per delivery (hrs)</label>
+          <input type="number" id="detention-hrs" value="3.5" min="0" max="12" step="0.5">
+          <span class="hint">National avg: 3–4 hrs at automotive gates</span>
+        </div>
+        <div class="field">
+          <label for="detention-rate">Your detention rate per hour ($)</label>
+          <input type="number" id="detention-rate" value="95" min="50" max="200" step="5">
+          <span class="hint">National avg: $75–$125/hr</span>
+        </div>
+        <div class="field">
+          <label for="staging-trucks">Trucks using staging bays</label>
+          <input type="number" id="staging-trucks" value="5" min="0" max="500" step="1">
+          <span class="hint">Can be same or a subset of your fleet</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="results-area" id="results-area">
+    <div class="card"><div class="no-results">Enter your fleet details above to see your savings.</div></div>
+  </div>
+
+  <div class="cta-card" id="cta-section" style="display:none">
+    <h2>Get your personalized savings report</h2>
+    <p>Download a one-page PDF-ready summary — and optionally send it to our team to reserve your spots and begin the LOI process.</p>
+    <div class="cta-grid">
+      <div class="field"><label for="cta-name">Your name</label><input type="text" id="cta-name" placeholder="John Smith"></div>
+      <div class="field"><label for="cta-company">Company name</label><input type="text" id="cta-company" placeholder="Smith Logistics LLC"></div>
+      <div class="field"><label for="cta-email">Email address</label><input type="email" id="cta-email" placeholder="john@smithlogistics.com"></div>
+      <div class="field"><label for="cta-phone">Phone (optional)</label><input type="tel" id="cta-phone" placeholder="(574) 555-0100"></div>
+    </div>
+    <label class="check-label">
+      <input type="checkbox" id="send-inquiry" checked>
+      Also send my savings report to SBN Logistics and request spot availability — I understand this is not a binding commitment.
+    </label>
+    <button class="btn-download" onclick="downloadReport()">
+      &#8659; Download my savings report
+    </button>
+    <div class="confirm-msg" id="confirm-msg">
+      &#10003; Report downloaded — and your inquiry has been sent to SBN Logistics. We'll be in touch within 1 business day.
+    </div>
+  </div>
+
+  <p class="footer-note">SBN Logistics LLC &nbsp;·&nbsp; 26905 US-20, New Carlisle, IN &nbsp;·&nbsp; A Hertzberg Holdings LLC company<br>Estimates based on inputs provided and national industry averages. Actual results will vary.</p>
+</div>
+
+<script>
+const fmt = n => '$' + Math.round(n).toLocaleString();
+
+function calc() {
+  const trucks          = Math.max(1, +document.getElementById('trucks').value || 0);
+  const currentCost     = +document.getElementById('current-cost').value || 0;
+  const deadhead        = +document.getElementById('deadhead').value || 0;
+  const fuel            = +document.getElementById('fuel').value || 0.52;
+  const stagingOn       = document.getElementById('staging-toggle').checked;
+  const loads           = +document.getElementById('loads').value || 0;
+  const detHrs          = +document.getElementById('detention-hrs').value || 0;
+  const detRate         = +document.getElementById('detention-rate').value || 0;
+  const stagingTrucks   = +document.getElementById('staging-trucks').value || 0;
+
+  const SBN_MONTHLY = 500;
+  const SBN_STAGING = 105;
+
+  const currentParkingMo      = trucks * currentCost;
+  const deadheadMo            = trucks * deadhead * fuel * 4;
+  const currentDetentionMo    = stagingOn && stagingTrucks > 0 ? stagingTrucks * loads * detHrs * detRate : 0;
+  const currentTotalMo        = currentParkingMo + deadheadMo + currentDetentionMo;
+  const sbnParkingMo          = trucks * SBN_MONTHLY;
+  const sbnStagingMo          = stagingOn && stagingTrucks > 0 ? stagingTrucks * loads * SBN_STAGING : 0;
+  const sbnTotalMo            = sbnParkingMo + sbnStagingMo;
+  const savedMo               = currentTotalMo - sbnTotalMo;
+  const savedAnnual           = savedMo * 12;
+  const savedPct              = currentTotalMo > 0 ? Math.round((savedMo / currentTotalMo) * 100) : 0;
+  const detSaved              = currentDetentionMo - sbnStagingMo;
+
+  const ra  = document.getElementById('results-area');
+  const cta = document.getElementById('cta-section');
+
+  ra.innerHTML = `
+    <div class="results-card">
+      <div class="results-title">&#9650; Your savings breakdown</div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="sl">Monthly savings</div><div class="sv green">${fmt(savedMo)}</div><div class="ss">${savedPct}% cost reduction</div></div>
+        <div class="stat-box"><div class="sl">Annual savings</div><div class="sv green">${fmt(savedAnnual)}</div><div class="ss">vs. current situation</div></div>
+        <div class="stat-box"><div class="sl">SBN all-in / month</div><div class="sv gold">${fmt(sbnTotalMo)}</div><div class="ss">parking${stagingOn && stagingTrucks > 0 ? ' + staging' : ''}</div></div>
+      </div>
+      <div class="compare-grid">
+        <div class="cbox bad">
+          <h3>&#10007; What you pay today</h3>
+          <div class="row"><span>Parking (${trucks} trucks)</span><span>${fmt(currentParkingMo)}/mo</span></div>
+          <div class="row"><span>Deadhead fuel &amp; wear</span><span>${fmt(deadheadMo)}/mo</span></div>
+          ${stagingOn && stagingTrucks > 0 ? `<div class="row"><span>Detention (${stagingTrucks} trucks × ${loads} loads)</span><span>${fmt(currentDetentionMo)}/mo</span></div>` : ''}
+          <div class="total"><span>Total / month</span><span>${fmt(currentTotalMo)}</span></div>
+        </div>
+        <div class="cbox good">
+          <h3>&#10003; With SBN Logistics</h3>
+          <div class="row"><span>Monthly anchor (${trucks} spots)</span><span>${fmt(sbnParkingMo)}/mo</span></div>
+          <div class="row"><span>Deadhead eliminated</span><span>$0</span></div>
+          ${stagingOn && stagingTrucks > 0 ? `<div class="row"><span>Staging ($105/48hr × ${loads} loads)</span><span>${fmt(sbnStagingMo)}/mo</span></div><div class="row"><span>Detention eliminated</span><span>$0</span></div>` : ''}
+          <div class="total"><span>Total / month</span><span>${fmt(sbnTotalMo)}</span></div>
+        </div>
+      </div>
+      ${stagingOn && stagingTrucks > 0 && detSaved > 0 ? `
+      <div class="staging-note">
+        <strong style="color:#E8B060">Staging math:</strong> ${stagingTrucks} trucks &times; ${loads} loads &times; ${detHrs} hrs &times; ${fmt(detRate)}/hr
+        = <strong style="color:#fff">${fmt(currentDetentionMo)}/mo in detention</strong> eliminated by pre-staging at SBN
+        for <strong style="color:#C8923A">${fmt(sbnStagingMo)}/mo</strong>
+        &mdash; a net recovery of <strong style="color:#5DC98A">${fmt(detSaved)}/mo</strong>.
+      </div>` : ''}
+      <div class="savings-banner">
+        <div class="sb-l">Your estimated annual savings with SBN</div>
+        <div class="sb-v">${fmt(savedAnnual)} / year</div>
+      </div>
+    </div>`;
+
+  cta.style.display = 'block';
+}
+
+document.getElementById('staging-toggle').addEventListener('change', function() {
+  document.getElementById('staging-fields').style.display = this.checked ? 'block' : 'none';
+  calc();
+});
+document.querySelectorAll('input[type=number]').forEach(el => el.addEventListener('input', calc));
+
+function downloadReport() {
+  const name    = document.getElementById('cta-name').value.trim() || 'Fleet Manager';
+  const company = document.getElementById('cta-company').value.trim() || 'Your Company';
+  const email   = document.getElementById('cta-email').value.trim();
+  const sendInq = document.getElementById('send-inquiry').checked;
+
+  const trucks        = Math.max(1, +document.getElementById('trucks').value || 0);
+  const currentCost   = +document.getElementById('current-cost').value || 0;
+  const deadhead      = +document.getElementById('deadhead').value || 0;
+  const fuel          = +document.getElementById('fuel').value || 0.52;
+  const stagingOn     = document.getElementById('staging-toggle').checked;
+  const loads         = +document.getElementById('loads').value || 0;
+  const detHrs        = +document.getElementById('detention-hrs').value || 0;
+  const detRate       = +document.getElementById('detention-rate').value || 0;
+  const stagingTrucks = +document.getElementById('staging-trucks').value || 0;
+
+  const SBN_MONTHLY = 500;
+  const SBN_STAGING = 105;
+
+  const currentParkingMo   = trucks * currentCost;
+  const deadheadMo         = trucks * deadhead * fuel * 4;
+  const currentDetentionMo = stagingOn && stagingTrucks > 0 ? stagingTrucks * loads * detHrs * detRate : 0;
+  const currentTotalMo     = currentParkingMo + deadheadMo + currentDetentionMo;
+  const sbnParkingMo       = trucks * SBN_MONTHLY;
+  const sbnStagingMo       = stagingOn && stagingTrucks > 0 ? stagingTrucks * loads * SBN_STAGING : 0;
+  const sbnTotalMo         = sbnParkingMo + sbnStagingMo;
+  const savedMo            = currentTotalMo - sbnTotalMo;
+  const savedAnnual        = savedMo * 12;
+  const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>SBN Logistics Savings Report</title>
+<style>
+body{font-family:'Segoe UI',Arial,sans-serif;max-width:720px;margin:40px auto;padding:0 24px;color:#1A2B4A}
+.hdr{background:#1A2B4A;color:#fff;padding:22px 28px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+.hdr h1{margin:0;font-size:19px}.hdr p{margin:5px 0 0;font-size:12px;color:#8A9AB5}
+.logo{background:#243558;border:2px solid #C8923A;border-radius:6px;padding:8px 14px;text-align:center}
+.logo span{display:block;color:#C8923A;font-size:15px;font-weight:700;letter-spacing:1px}
+.logo small{color:#8A9AB5;font-size:9px}
+.banner{background:#C8923A;border-radius:6px;padding:14px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.banner .bl{font-size:13px;font-weight:600;color:#1A2B4A}.banner .bv{font-size:24px;font-weight:700;color:#1A2B4A}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.sbox{background:#f5f3ef;border-radius:6px;padding:12px 14px}
+.sbox .sl{font-size:11px;color:#8A9AB5;margin-bottom:3px}.sbox .sv{font-size:19px;font-weight:600}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.cbox{border-radius:6px;padding:12px 14px}
+.cbox.bad{background:#fff0f0;border:1px solid #f0c0c0}.cbox.good{background:#f0fff5;border:1px solid #c0e8d0}
+.cbox h3{font-size:12px;margin:0 0 8px}
+.cbox.bad h3{color:#a32d2d}.cbox.good h3{color:#1a5a30}
+.cbox .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#374B6D}
+.cbox .total{display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.08)}
+.cbox.bad .total{color:#a32d2d}.cbox.good .total{color:#1a5a30}
+.note{background:#fffbe6;border:1px solid #f0d060;border-radius:6px;padding:10px 14px;font-size:11px;color:#633806;margin-bottom:14px}
+.footer{font-size:10px;color:#8A9AB5;border-top:1px solid #e0e0e0;padding-top:12px;margin-top:8px}
+.inq{background:#eafaf2;border:1px solid #c0e8d0;border-radius:6px;padding:10px 14px;font-size:12px;color:#1a5a30;margin-bottom:14px}
+</style></head><body>
+<div class="hdr">
+  <div><h1>Fleet Savings Report</h1><p>Prepared for: <strong>${company}</strong> &nbsp;&#183;&nbsp; ${today}</p></div>
+  <div class="logo"><span>SBN</span><small>LOGISTICS LLC</small></div>
+</div>
+<div class="banner"><div class="bl">Estimated annual savings with SBN Logistics</div><div class="bv">$${Math.round(savedAnnual).toLocaleString()} / year</div></div>
+<div class="sgrid">
+  <div class="sbox"><div class="sl">Monthly savings</div><div class="sv" style="color:#2E7D52">$${Math.round(savedMo).toLocaleString()}</div></div>
+  <div class="sbox"><div class="sl">SBN all-in cost / mo</div><div class="sv" style="color:#C8923A">$${Math.round(sbnTotalMo).toLocaleString()}</div></div>
+  <div class="sbox"><div class="sl">Trucks covered</div><div class="sv">${trucks} units</div></div>
+</div>
+<div class="cgrid">
+  <div class="cbox bad">
+    <h3>&#10007; What you pay today</h3>
+    <div class="row"><span>Parking (${trucks} trucks)</span><span>$${Math.round(currentParkingMo).toLocaleString()}/mo</span></div>
+    <div class="row"><span>Deadhead fuel &amp; wear</span><span>$${Math.round(deadheadMo).toLocaleString()}/mo</span></div>
+    ${stagingOn && stagingTrucks > 0 ? `<div class="row"><span>Detention (${stagingTrucks} trucks)</span><span>$${Math.round(currentDetentionMo).toLocaleString()}/mo</span></div>` : ''}
+    <div class="total"><span>Total / month</span><span>$${Math.round(currentTotalMo).toLocaleString()}</span></div>
+  </div>
+  <div class="cbox good">
+    <h3>&#10003; With SBN Logistics</h3>
+    <div class="row"><span>Monthly anchor spots</span><span>$${Math.round(sbnParkingMo).toLocaleString()}/mo</span></div>
+    <div class="row"><span>Deadhead eliminated</span><span>$0</span></div>
+    ${stagingOn && stagingTrucks > 0 ? `<div class="row"><span>Staging fees</span><span>$${Math.round(sbnStagingMo).toLocaleString()}/mo</span></div><div class="row"><span>Detention eliminated</span><span>$0</span></div>` : ''}
+    <div class="total"><span>Total / month</span><span>$${Math.round(sbnTotalMo).toLocaleString()}</span></div>
+  </div>
+</div>
+${sendInq ? `<div class="inq">&#10003; <strong>Inquiry submitted</strong> — SBN Logistics will follow up within 1 business day to discuss spot availability and LOI terms. (${email})</div>` : ''}
+<div class="note">Estimates based on inputs provided and national industry averages (ATRI detention data). Actual savings vary. This report does not constitute a binding agreement. SBN Logistics LLC is currently accepting Letters of Intent for Phase 1 monthly fleet spots.</div>
+<div class="footer">SBN Logistics LLC &nbsp;&#183;&nbsp; 26905 US-20, New Carlisle, IN 46552 &nbsp;&#183;&nbsp; A Hertzberg Holdings LLC company &nbsp;&#183;&nbsp; Report generated ${today}</div>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'SBN-Savings-Report-' + company.replace(/\s+/g,'-') + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  document.getElementById('confirm-msg').style.display = sendInq ? 'block' : 'none';
+}
+
+calc();
+</script>
+</body>
+</html>
